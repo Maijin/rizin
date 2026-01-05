@@ -121,6 +121,47 @@ bool test_rz_cons() {
 	mu_end;
 }
 
+bool test_rz_progressbar() {
+	RzBarOptions opts = { 0 };
+	RzStrBuf *buf;
+
+	opts.unicode = false;
+	opts.color = false;
+	opts.legend = false;
+
+	buf = rz_progressbar(&opts, 50, 50);
+	mu_assert_streq (rz_strbuf_get(buf), "[#################------------------]", "Progressbar no legend");
+	rz_strbuf_free(buf);
+
+	opts.legend = true;
+	buf = rz_progressbar(&opts, 50, 50);
+	mu_assert_streq (rz_strbuf_get(buf), "  50% [#################------------------]", "Progressbar with legend");
+	rz_strbuf_free(buf);
+
+	// Test pc < 0
+	buf = rz_progressbar(&opts, -10, 50);
+	mu_assert_streq (rz_strbuf_get(buf), "   0% [-----------------------------------]", "Progressbar pc < 0");
+	rz_strbuf_free(buf);
+
+	// Test pc > 100
+	buf = rz_progressbar(&opts, 110, 50);
+	mu_assert_streq (rz_strbuf_get(buf), " 100% [###################################]", "Progressbar pc > 100");
+	rz_strbuf_free(buf);
+
+	opts.legend = false;
+	// Test width = -1. Should default to 78.
+	buf = rz_progressbar(&opts, 25, -1);
+	mu_assert_streq (rz_strbuf_get(buf), "[###############------------------------------------------------]", "Progressbar width=-1");
+	rz_strbuf_free(buf);
+
+	opts.unicode = true;
+	buf = rz_progressbar(&opts, 75, 50);
+	mu_assert_streq (rz_strbuf_get(buf), "[██████████████████████████─────────]", "Progressbar unicode");
+	rz_strbuf_free(buf);
+
+	mu_end;
+}
+
 bool test_cons_to_html() {
 	char *html;
 
@@ -362,14 +403,47 @@ bool test_line_undo(void) {
 	mu_end;
 }
 
+bool test_rz_rangebar() {
+	RzBarOptions opts = { 0 };
+	RzStrBuf *buf;
+
+	opts.unicode = false;
+	opts.color = false;
+
+	buf = rz_rangebar(&opts, 0, 10, 0, 100, 10);
+	mu_assert_streq (rz_strbuf_get(buf), "|##--------|", "Simple range");
+	rz_strbuf_free(buf);
+
+	buf = rz_rangebar(&opts, 50, 60, 0, 100, 10);
+	mu_assert_streq (rz_strbuf_get(buf), "|----###---|", "Simple range 2");
+	rz_strbuf_free(buf);
+
+	buf = rz_rangebar(&opts, 90, 100, 0, 100, 10);
+	mu_assert_streq (rz_strbuf_get(buf), "|--------##|", "Simple range 3");
+	rz_strbuf_free(buf);
+
+	buf = rz_rangebar(&opts, 0, 100, 0, 100, 10);
+	mu_assert_streq (rz_strbuf_get(buf), "|##########|", "Full range");
+	rz_strbuf_free(buf);
+
+	opts.unicode = true;
+	buf = rz_rangebar(&opts, 0, 10, 0, 100, 10);
+	mu_assert_streq (rz_strbuf_get(buf), "|██────────|", "Unicode range");
+	rz_strbuf_free(buf);
+
+	mu_end;
+}
+
 bool all_tests() {
 	mu_run_test(test_rz_cons);
+	mu_run_test(test_rz_progressbar);
 	mu_run_test(test_cons_to_html);
 	mu_run_test(test_line_nocompletion);
 	mu_run_test(test_line_onecompletion);
 	mu_run_test(test_line_multicompletion);
 	mu_run_test(test_line_kill_word);
 	mu_run_test(test_line_undo);
+	mu_run_test(test_rz_rangebar);
 	return tests_passed != tests_run;
 }
 
